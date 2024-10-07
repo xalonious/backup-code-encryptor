@@ -61,7 +61,7 @@ def decrypt_file(filename: str, password: str) -> bool:
 
 def process_files(action: str, service: str, password: str):
     files = {
-        'discord': 'discord_backup.txt',
+        'discord': 'discord_backup.txt', # You can change these to fit your own files
         'roblox': 'roblox_backup.txt',
         'snapchat': 'snapchat_backup.txt',
         'epic': 'epic_backup.txt',
