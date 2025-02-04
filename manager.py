@@ -67,6 +67,7 @@ def process_files(action: str, service: str, password: str):
         'epic': 'epic_backup.txt',
         'github': 'github_backup.txt',
         'namecheap': 'namecheap_backup.txt',
+        'steam': 'steam_backup.txt',
     }
     
     if service == 'all':
