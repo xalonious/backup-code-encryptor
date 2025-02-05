@@ -1,28 +1,39 @@
 import base64
 import os
 from getpass import getpass
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.fernet import InvalidToken
+from colorama import init, Fore, Style
+
+init(autoreset=True)
 
 SALT_LENGTH = 16
 ITERATIONS = 100_000
 HASH_ALGORITHM = hashes.SHA256
 KEY_LENGTH = 32
 
+def print_question(message: str):
+    print(Fore.MAGENTA + "[?] " + message + Style.RESET_ALL)
+
+def print_action(message: str):
+    print(Fore.MAGENTA + "[✔️] " + message + Style.RESET_ALL)
+
+def print_error(message: str):
+    print(Fore.RED + "[!] " + message + Style.RESET_ALL)
+
 def generate_salt() -> bytes:
     return os.urandom(SALT_LENGTH)
 
 def get_key(password: str, salt: bytes) -> bytes:
-    password = password.encode()
+    password_bytes = password.encode()
     kdf = PBKDF2HMAC(
         algorithm=HASH_ALGORITHM(),
         length=KEY_LENGTH,
         salt=salt,
         iterations=ITERATIONS,
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password))
+    key = base64.urlsafe_b64encode(kdf.derive(password_bytes))
     return key
 
 def encrypt_file(filename: str, password: str):
@@ -35,9 +46,9 @@ def encrypt_file(filename: str, password: str):
         encrypted_data = cipher_suite.encrypt(file_data)
         with open(filename, 'wb') as file:
             file.write(salt + encrypted_data)
-        print(f"Encrypted {filename} successfully.")
+        print_action(f"Encrypted {filename} successfully.")
     except IOError as e:
-        print(f"Error encrypting file {filename}: {e}")
+        print_error(f"Error encrypting file {filename}: {e}")
 
 def decrypt_file(filename: str, password: str) -> bool:
     try:
@@ -50,18 +61,18 @@ def decrypt_file(filename: str, password: str) -> bool:
             decrypted_data = cipher_suite.decrypt(encrypted_data)
             with open(filename, 'wb') as file:
                 file.write(decrypted_data)
-            print(f"Decrypted {filename} successfully.")
+            print_action(f"Decrypted {filename} successfully.")
             return True
         except InvalidToken:
-            print(f"Invalid password for file {filename}.")
+            print_error(f"Invalid password for file {filename}.")
             return False
     except IOError as e:
-        print(f"Error decrypting file {filename}: {e}")
+        print_error(f"Error decrypting file {filename}: {e}")
         return False
 
 def process_files(action: str, service: str, password: str):
     files = {
-        'discord': 'discord_backup.txt',  # You can change these to fit your own files
+        'discord': 'discord_backup.txt',  # Adjust file names as needed
         'roblox': 'roblox_backup.txt',
         'snapchat': 'snapchat_backup.txt',
         'epic': 'epic_backup.txt',
@@ -83,26 +94,26 @@ def process_files(action: str, service: str, password: str):
             elif action == 'decrypt':
                 decrypt_file(filename, password)
         else:
-            print(f"No file found for service: {svc}")
+            print_error(f"No file found for service: {svc}")
 
 def main():
     valid_actions = ['encrypt', 'decrypt']
-    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'all']
+    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'all'] # Add/remove services as needed
 
-    action = input("Do you want to encrypt or decrypt? ").strip().lower()
+    action = input(Fore.MAGENTA + "[?] Do you want to encrypt or decrypt? " + Style.RESET_ALL).strip().lower()
     while action not in valid_actions:
-        print("Invalid action. Please enter 'encrypt' or 'decrypt'.")
-        action = input("Do you want to encrypt or decrypt? ").strip().lower()
+        print_error("Invalid action. Please enter 'encrypt' or 'decrypt'.")
+        action = input(Fore.MAGENTA + "[?] Do you want to encrypt or decrypt? " + Style.RESET_ALL).strip().lower()
 
-    service = input("Which service do you want to encrypt or decrypt? ").strip().lower()
+    service = input(Fore.MAGENTA + "[?] Which service do you want to encrypt or decrypt? " + Style.RESET_ALL).strip().lower()
     while service not in valid_services:
-        print("Invalid service. Please enter one of the following:")
-        print(", ".join(valid_services))
-        service = input("Which service do you want to encrypt or decrypt? ").strip().lower()
+        print_error("Invalid service. Please enter one of the following:")
+        print_error(", ".join(valid_services))
+        service = input(Fore.MAGENTA + "[?] Which service do you want to encrypt or decrypt? " + Style.RESET_ALL).strip().lower()
 
-    password = getpass("Enter the password: ")
+    password = getpass(Fore.MAGENTA + "[?] Enter the password: " + Style.RESET_ALL)
     process_files(action, service, password)
 
 if __name__ == "__main__":
     main()
-    input("Press Enter to exit...")
+    input(Fore.MAGENTA + "[?] Press Enter to exit..." + Style.RESET_ALL)
