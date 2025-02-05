@@ -61,7 +61,7 @@ def decrypt_file(filename: str, password: str) -> bool:
 
 def process_files(action: str, service: str, password: str):
     files = {
-        'discord': 'discord_backup.txt', # You can change these to fit your own files
+        'discord': 'discord_backup.txt',  # You can change these to fit your own files
         'roblox': 'roblox_backup.txt',
         'snapchat': 'snapchat_backup.txt',
         'epic': 'epic_backup.txt',
@@ -82,14 +82,24 @@ def process_files(action: str, service: str, password: str):
                 encrypt_file(filename, password)
             elif action == 'decrypt':
                 decrypt_file(filename, password)
+        else:
+            print(f"No file found for service: {svc}")
 
 def main():
+    valid_actions = ['encrypt', 'decrypt']
+    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'all']
+
     action = input("Do you want to encrypt or decrypt? ").strip().lower()
-    service = input("Which service do you want to encrypt or decrypt? ").strip().lower()
-    if action not in ['encrypt', 'decrypt']:
+    while action not in valid_actions:
         print("Invalid action. Please enter 'encrypt' or 'decrypt'.")
-        return
-    
+        action = input("Do you want to encrypt or decrypt? ").strip().lower()
+
+    service = input("Which service do you want to encrypt or decrypt? ").strip().lower()
+    while service not in valid_services:
+        print("Invalid service. Please enter one of the following:")
+        print(", ".join(valid_services))
+        service = input("Which service do you want to encrypt or decrypt? ").strip().lower()
+
     password = getpass("Enter the password: ")
     process_files(action, service, password)
 
