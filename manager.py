@@ -12,6 +12,7 @@ SALT_LENGTH = 16
 ITERATIONS = 100_000
 HASH_ALGORITHM = hashes.SHA256
 KEY_LENGTH = 32
+MAGIC = b"FENC1"  
 
 def print_question(message: str):
     print(Fore.MAGENTA + "[?] " + message + Style.RESET_ALL)
@@ -36,16 +37,31 @@ def get_key(password: str, salt: bytes) -> bytes:
     key = base64.urlsafe_b64encode(kdf.derive(password_bytes))
     return key
 
+def is_encrypted_file(filename: str) -> bool:
+    try:
+        with open(filename, "rb") as f:
+            return f.read(len(MAGIC)) == MAGIC
+    except IOError:
+        return False
+
 def encrypt_file(filename: str, password: str):
+    if is_encrypted_file(filename):
+        print_error(f"{filename} already appears to be encrypted. Skipping.")
+        return
+
     salt = generate_salt()
     key = get_key(password, salt)
     cipher_suite = Fernet(key)
+
     try:
         with open(filename, 'rb') as file:
             file_data = file.read()
+
         encrypted_data = cipher_suite.encrypt(file_data)
+
         with open(filename, 'wb') as file:
-            file.write(salt + encrypted_data)
+            file.write(MAGIC + salt + encrypted_data)
+
         print_action(f"Encrypted {filename} successfully.")
     except IOError as e:
         print_error(f"Error encrypting file {filename}: {e}")
@@ -53,10 +69,17 @@ def encrypt_file(filename: str, password: str):
 def decrypt_file(filename: str, password: str) -> bool:
     try:
         with open(filename, 'rb') as file:
+            header = file.read(len(MAGIC))
+            if header != MAGIC:
+                print_error(f"{filename} does not appear to be encrypted (missing header).")
+                return False
+
             salt = file.read(SALT_LENGTH)
             encrypted_data = file.read()
+
         key = get_key(password, salt)
         cipher_suite = Fernet(key)
+
         try:
             decrypted_data = cipher_suite.decrypt(encrypted_data)
             with open(filename, 'wb') as file:
@@ -80,25 +103,33 @@ def process_files(action: str, service: str, password: str):
         'namecheap': 'namecheap_backup.txt',
         'steam': 'steam_backup.txt',
     }
-    
+
     if service == 'all':
         services = files.keys()
     else:
         services = [service]
-    
+
     for svc in services:
         filename = files.get(svc)
-        if filename:
-            if action == 'encrypt':
-                encrypt_file(filename, password)
-            elif action == 'decrypt':
-                decrypt_file(filename, password)
-        else:
+        if not filename:
             print_error(f"No file found for service: {svc}")
+            continue
+
+        if action == 'encrypt':
+            if is_encrypted_file(filename):
+                print_error(f"{filename} already appears to be encrypted. Skipping.")
+            else:
+                encrypt_file(filename, password)
+
+        elif action == 'decrypt':
+            if not is_encrypted_file(filename):
+                print_error(f"{filename} does not appear to be encrypted. Skipping.")
+            else:
+                decrypt_file(filename, password)
 
 def main():
     valid_actions = ['encrypt', 'decrypt']
-    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'all'] # Add/remove services as needed
+    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'all']  # Add/remove services as needed
 
     action = input(Fore.MAGENTA + "[?] Do you want to encrypt or decrypt? " + Style.RESET_ALL).strip().lower()
     while action not in valid_actions:
