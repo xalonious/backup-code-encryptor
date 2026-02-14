@@ -102,6 +102,7 @@ def process_files(action: str, service: str, password: str):
         'github': 'github_backup.txt',
         'namecheap': 'namecheap_backup.txt',
         'steam': 'steam_backup.txt',
+        'nextcloud': 'nextcloud_backup.txt',
     }
 
     if service == 'all':
@@ -129,7 +130,7 @@ def process_files(action: str, service: str, password: str):
 
 def main():
     valid_actions = ['encrypt', 'decrypt']
-    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'all']  # Add/remove services as needed
+    valid_services = ['discord', 'roblox', 'snapchat', 'epic', 'github', 'namecheap', 'steam', 'nextcloud', 'all']  # Add/remove services as needed
 
     action = input(Fore.MAGENTA + "[?] Do you want to encrypt or decrypt? " + Style.RESET_ALL).strip().lower()
     while action not in valid_actions:
